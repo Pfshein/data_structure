@@ -5,7 +5,7 @@ from typing import Any
 class Node:
     def __init__(self, node: Any, prev_node: Any = None, next_node: Any = None):
         self.prev_node = prev_node
-        self.node = node
+        self.node = node  # почему node? это value. node как то сбивает с толку тут, и код дальше читать сложнее
         self.next_node = next_node
 
     def __str__(self) -> str:
@@ -121,7 +121,7 @@ class DoubleLinkedList:
             print("List is empty")
             return
 
-        if not self.head.next_node:
+        if not self.head.next_node:  # можно объединить со следующим if
             if self.head.node == value:
                 self.head = None
             return
@@ -180,7 +180,7 @@ class DoubleLinkedList:
 
         return self.head.next_node
 
-    def get_prev(self) -> Any | None:
+    def get_prev(self) -> Any | None:  # у head никогда не будет previous. Метод не нужен
         """
         Берем предыдущий элемент из списка
         """
@@ -198,7 +198,7 @@ class DoubleLinkedList:
         while node:
             lst.append(node.node)
             node = node.next_node
-            if not node:
+            if not node:  # не нужно
                 break
         return str(lst)
 
