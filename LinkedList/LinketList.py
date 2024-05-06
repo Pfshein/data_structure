@@ -4,7 +4,7 @@ from typing import Any
 
 class Node:
     def __init__(self, node: Any, next_node: Any = None) -> None:
-        self.node = node
+        self.node = node  # почему node? это value. node как то сбивает с толку тут, и код дальше читать сложнее
         self.next_node = next_node
 
     def __str__(self) -> str:
@@ -87,6 +87,9 @@ class LinkedList:
         >>> print(linked_list)
         [5, 10, 100]
 
+        >>> linked_list.delete(123456)  # это приводит к ошибке
+        >>> print(linked_list)
+        [5, 10, 100]
         """
         node = self.head
         prev_node = node
@@ -97,8 +100,8 @@ class LinkedList:
             while node.node != value:
                 prev_node = node
                 node = node.next_node
-                next_node = node.next_node
-            node = prev_node
+                next_node = node.next_node  # тут берешь от предыдущего, но никак не проверяешь, что там есть следующий элемент
+            node = prev_node  # этот шаг лишний, так как ничего не меняет
             node.next_node = next_node
 
     def delete_at_head(self) -> None:
@@ -127,6 +130,9 @@ class LinkedList:
         """
         Ищем содержится ли элемент в списке, если да, то возваращем True. Если нет, возвращаем False
         >>> linked_list = LinkedList()
+
+        >>> linked_list.search(50)  # будет ошибка
+
         >>> linked_list.insert_at_end(5)
         >>> linked_list.insert_at_end(10)
         >>> linked_list.insert_at_end(50)
@@ -150,7 +156,7 @@ class LinkedList:
         while node:
             lst.append(node.node)
             node = node.next_node
-            if not node:
+            if not node:  # не нужно, цикл и так не будет продолжаться, если node false
                 break
         return str(lst)
 

@@ -1,5 +1,11 @@
+"""
+Реализация через один список норм) но чаще используют два списка - одни для значений и один для ключей
+Рекомендую почитать - https://www.fluentpython.com/extra/internals-of-sets-and-dicts/
+"""
+
 import doctest
 from typing import Any
+from collections.abc import Hashable
 
 
 class Hashtable:
@@ -14,9 +20,9 @@ class Hashtable:
 
         """
         self.capacity = capacity
-        self.table = [None] * capacity
+        self.table: list[tuple[Hashable, Any] | None] = [None] * capacity  # с тайпингом сильно проще понимать код
 
-    def __setitem__(self, key: [int, str, tuple, bool, float], value: Any) -> None:
+    def __setitem__(self, key: [int, str, tuple, bool, float], value: Any) -> None:  # для key лучше использовать Hashable, чтобы можно было свои типы тоже использовать
         """
         Добавляем элемент в таблицу.
         Проблему с коллизией решил было трудно решить и скорее всего решение костыльное.
@@ -34,6 +40,9 @@ class Hashtable:
         >>> table[1] = 'some'
         >>> table[1]
         'some'
+        >>> table = Hashtable(1)
+        >>> table[1] = 'qwerty'
+        >>> table[2] = 'qwerty'
 
         """
         index = self._index(key)
@@ -41,9 +50,14 @@ class Hashtable:
         counter = 0
         counter_not_none_pair = 0
 
-        for _ in range(self.capacity):
+        # тут ты при добавлении элемента каждый раз итериурешься и считаешь свободные ячейки
+        # при больших размерах таблицы это будет сильно замедлять работу
+        # плюс если я записал по ключу None, то это сломает это место
+        # Можно просто определить в init параметр size и тут его изменять один раз
+        for _ in range(self.capacity):  # '_' используется, когда игнорируем значение. А тут ты его дальше используешь. Нужно дать номарльно имя
             if self.table[_] is not None:
                 counter_not_none_pair += 1
+
 
         if counter_not_none_pair > 0:
             while pair is not None and pair[0] != key:
@@ -61,9 +75,9 @@ class Hashtable:
                 index += 1
                 index %= self.capacity
 
-                if counter >= self.capacity:
+                if counter >= self.capacity:  # это условие никогда не выполнится
                     raise ValueError(f'Cannot add {key}: {value}, because over limit hash table')
-                    break
+                    break  # это не нужно, так как выше кидаешь ошибку уже
 
             else:
                 self.table[index] = (key, value)
@@ -81,11 +95,13 @@ class Hashtable:
         >>> table['start']
         194
 
+        >>> table['other']  # это вызывает ошибку
+        ...
         """
         index = self._index(key)
         pair = self.table[index]
 
-        while pair[0] != key:
+        while pair[0] != key:  # при поиске обходишь все элементы, даже если встретил None. То есть для таблицы с одним элементов все равно будешь смотреть все
             index += 1
             index %= self.capacity
             pair = self.table[index]
@@ -107,7 +123,7 @@ class Hashtable:
         counter_index = 0
         counter_not_none = 0
 
-        for _ in range(self.capacity):
+        for _ in range(self.capacity):  # лишний цикл
             if self.table[_] is not None:
                 counter_not_none += 1
 
@@ -116,7 +132,7 @@ class Hashtable:
         else:
             while pair[0] != key and pair is not None:
                 index += 1
-                index %= self.capacity
+                index %= self.capacity  # получение следующего индекса лучше вынести в одельный метод, так как повторяется в нескольких местах, что-то вроде `def _get_next_index(self, index: int) -> int:`
                 pair = self.table[index]
                 counter_index += 1
                 if counter_index == self.capacity:
@@ -131,6 +147,9 @@ class Hashtable:
 
         По ТЗ удаленное значение должно быть заменено на EMPTY. Не придумал, как это сделать.
         Видел, что такое реализуется через создание EMPTY = object(), но сюда уместить не смог.
+
+        Выше верно написал, потому что иначе ппосле удаления как понять, что это удаленный элемент, а не пустое место?
+        Это моежт быть нужно, чтобы при поиске не обходить всю таблицу, а искать до первого None
 
         >>> table = Hashtable(5)
         >>> table['start'] = 194
@@ -176,7 +195,7 @@ class Hashtable:
         """
         table_keys = []
 
-        for _ in self.table:
+        for _ in self.table:  # не используй `_`, если потом ссылаешься на это значение!
             if _ is None:
                 table_keys.append(_)
             else:
